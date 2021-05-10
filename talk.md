@@ -1,14 +1,13 @@
 # Title
 
-Good morning from London in the United Kingdom! My name is Will Thompson. I'm an engineering director at Endless OS Foundation. [Endless OS Foundation blurb.]
+Good morning from London in the United Kingdom! My name is Will Thompson. I'm an engineering director at Endless OS Foundation. 
+Our mission is to help all people and communities connect with technology. I'll say a bit more about Endless OS itself later.
 
 Today I'm going to talk about Flatpak External Data Checker. I'll explain what it is, tell you a bit about its history, and what it's doing today. I'll give some examples of how you can use it yourself, and ways that you can get involved in the project.
 
 We'll have some time at the end for questions, so if you have any questions during the talk, please leave them in the shared notes section of the chat. If you're watching the recording and have any questions, please get in touch: my contact details are on this slide.
 
 # What is Flatpak?
-
-[Flatpak & Flathub logos]
 
 ![](images/flatpak-fullcolor.png) ![](images/flathub-badge-en.svg)
 
@@ -52,7 +51,7 @@ Endless OS is a desktop OS with some properties borrowed from mobile OSes. Like 
 
 Endless OS has many unique apps for offline content, built using a custom Flatpak runtime and build pipeline, and published in our own Flatpak repository. But, of course, users need regular apps too, for productivity, creativity and chaos.
 
-## ???
+## Bootstrapping the App Center
 
 ![com.spotify.Client.png](images/com.spotify.Client.png)
 ![com.skype.Client.png](images/com.skype.Client.png)
@@ -60,11 +59,9 @@ Endless OS has many unique apps for offline content, built using a custom Flatpa
 
 Back in those days, Flathub didn't exist, so we built & published a bunch of third-party apps in our own Flatpak repository, too. Most of them were open-source, but our users expected to be able to use Skype, Spotify and Dropbox, so these were built as extra-data apps. Joaquim Rocha wrote a Jenkins job that would check for new versions of these apps, and email the team if the Flatpaks needed to be updated.
 
-As the list of third party apps grew, the script got more complicated. Joaquim rewrote it in Python, and published it as `flatpak-external-data-checker`.
+As the list of third party apps grew, the script got more complicated. Joaquim rewrote it in Python, and published it as the first version of `flatpak-external-data-checker`.
 
 ## Flathub, 2018
-
-![](./images/check-most-flathub-repos.png)
 
 ```diff
 commit 9c628e051620e1f845eaf5953354414cc1a0d00e
@@ -126,24 +123,87 @@ One of the really nice things about this workflow is that Flathub's own continuo
 
 ![](images/first-flathubbot-pull-request.png)
 
-By the end of 2019, Bartłomiej Piotrowski had deployed this tool on Flathub's own infrastructure, and we moved the repository to the Flathub organisation. He set it up to check any app on Flathub that had opted in.
+Bartłomiej Piotrowski is a DevOps engineer at the GNOME Foundation, and is one of the main administrators of Flathub.
+Near the end of 2019, he deployed Flatpak External Data Checker on Flathub's own infrastructure, and we moved the repository to the Flathub organisation. He set it up to check any app on Flathub that had opted in.
 
 Making the tool more “official” had several nice results. Before, some Flathub contributors had been hesitant to integrate with a tool running on Endless's private CI infrastructure; as part of the Flathub organisation, they were happy to opt in, safe in the knowledge that the Flathub administrators could intervene as needed. It was also made a [requirement](https://github.com/flathub/flathub/wiki/App-Requirements#external-data-checker) that new extra-data apps submitted to Flathub should integrate with this tool, which of course helped with its adoption. Together, these also led to more people contributing to the project.
 
 This PR for Zoom seems to have been the first one opened by the Flathub instance of this tool. You might also notice that it's learned to update the appdata.xml file with the version number and release date of the new version of Zoom.
 
-## Enter gasinvein -- TODO, move this later.
+# Impact
+
+Now we've reached the present day, let's take a look at how widely this tool is used on Flathub.
+
+## Number of apps
+
+![repos-over-time.png](images/repos-over-time.png)
+
+Over time, the number of apps that are updated by Flatpak External Data Checker is growing steadily. When I prepared this talk, there were 112 apps on Flathub which have been updated by this tool at least once in their history.
+
+You can probably see two rather clear points where the slope becomes steeper. The first is at the end of 2019, which as I just explained is when Bart deployed the external data checker on Flathub. The second is at the start of this year, 2021.
+
+I think this is because a prolific Flathub contributor, who goes by the username "gas in vein", became a comaintainer of Flatpak External Data Checker near the end of 2020 and contributed many nice improvements. In particular, he added several new ways to look for updated versions – such as via release-monitoring.org, and a general-purpose JSON parser – which made it possible to check and automatically update many more apps.
+
+## Enter gasinvein
 
 ![](images/fedc-commits-over-time.png)
 ![](images/fedc-lines-added-over-time.png)
 
-Around the end of 2020, a pseudonymous and prolific Flatpak community member, *gasinvein*, made some nice contributions, so I made him a co-maintainer of the project. I think these graphs of number of commits and number of lines added speak for themselves!
+If you take a look at GitHub's page which graph contributions to Flatpak External Data Checker itself over time, I think the graphs of number of commits and number of lines added speak to the scale of his contributions to this project. I have to confess that I have barely worked on it myself this year, so I'd like to thank gas in vein, and for that matter everyone else who's contributed over the past year or so, for keeping this project moving.
+
+## Updates by month
+
+![commits-per-month.png](images/commits-per-month.png)
+
+Anyway, back to what the tool does. Here I've plotted the number of repositories to which an update from Flatpak External Data Checker was merged in any given month, and the number of changes. Not every app has an update every month, which is why the number of repositories updated in the last few months is just 50 or so. But the number of commits it makes is consistently much higher, so it's updating some apps more than once a month. For the last two months, it's been over 300 commits per month.
+
+## Top apps
+
+![top-repos.png](images/top-repos.png)
+
+Here are the top 30 apps and runtimes by number of commits authored by flatpak-external-data-checker. Of course this will be biased towards apps which have been using the tool for longer.
+
+As I described earlier, the original motivation for this tool was to automatically update wrappers for extra-data apps, since these can break without warning if the extra-data URL becomes invalid.
+
+But here I have coloured each app or runtime's bar with whether it is extra-data or not, and the surprising discovery is that around half of these top 30 are not extra-data, but open-source software, or at least software which Flathub can freely redistribute. For instance, the third-most-frequently-updated app on this list is RPCS3, a PlayStation 3 emulated released under the GPL. Flathub tracks the `master` branch of the upstream project. I guess this is a fast-moving project where being at the bleeding edge is worth the potential for the occasional broken build if it means better compatibility with games. High up here, we also see the nightly build of the Rust toolchain, which is open source, as well as the Insiders (a.k.a. nightly) build of Visual Studio Code, which isn't.
+
+## Kinds of app
+
+![proportion.png](images/proportion.png)
+
+This made me wonder: if so many of the most-frequently-updated repositories are in fact open source, how do the totals break down, both on Flathub in general, and for repos monitored by External Data Checker in particular. 
+
+Of the 112 repos that external data checker has ever updated, only 36 are extra-data. The remaining 76 are normal, redistributable Flatpaks, which is actually almost as many as the 79 extra-data apps that Flathub has in total. But in relative terms, the external data checker is used for almost half (45%) of those extra-data apps, compared to just 5% of other apps.
+
+Personally, I find these numbers quite reassuring. I think it is reasonable to ask whether it is really desirable for Flathub to publish these extra-data wrappers for proprietary apps. Even if you ignore the free software angle, 
+
+> Flathub is primarily intended as a service that is used by app developers to distribute their apps. […] We would prefer that [applications on Flathub] are controlled by their authors.
+
+Those aren't my words, by the way: I'm quoting [from the Flathub website](https://github.com/flathub/flathub/wiki/App-Submission#someone-else-has-put-my-app-on-flathubwhat-do-i-do), by the way.
+
+So, is this tool making it too easy (if you like) to publish wrappers rather than encouraging app developers to publish their own apps on Flathub for real?
+
+Like Flathub as a whole, I take a pragmatic stance on this. There are some apps which people really do need to be able to run on their computers. The last year has shown us that running Zoom and Microsoft Teams and so on is, for better or for worse, not a matter of choice for a lot of people. At least by distributing them with Flatpak, there is a chance that they are more tightly sandboxed than a traditional distro package would be; and because Flatpak apps can be safely automatically upgraded in the background while the app is running, automating the publication of new versions means that fixes reach users more promptly.
+
+## Chromium
+
+![fedc-chromium-pr.png](images/fedc-chromium-pr.png)
+
+And these things are true for open-source software as well, which is 95% of the software on Flathub, and Flatpak External Data Checker can help keep that up to date as well.
+
+One important class of software that needs to be kept up-to-date is web browsers. Chromium has been on Flathub for about six months. It has a very rapid major release cadence, releasing every six weeks, and I think this is going down to four weeks soon. And even in between those releases, it's pretty common to see one or more point releases, which almost always fix serious security vulnerabilities.
+
+The Chromium repository on Flathub is wired up to Flatpak External Data Checker, so whenever a new release appears, a PR is quickly created, and a test build is made. Major updates tend to need manual intervention since the Flathub version has a dozen or so patches to better integrate with Flatpak, but point releases tend to build cleanly. Back when we built Chromium into Endless OS itself, any point release involved a developer manually rebasing the package, building it, waiting several hours for a test build to appear, testing it, and finally releasing it… oh, except that Endless OS only releases monthly so we would have to decide whether to issue an emergency release of the OS, or delay getting updates to end-users. Now, the workflow is: a pull request appears automatically, followed quickly by a test build; someone tests that, and presses Merge. That's it.
+
+Personally, I publish a few of my own apps on Flathub, and somewhat maintain the Flatpaks for perhaps a dozen more, most of which are open source. Getting notified of a new upstream TuxPaint releases in the form of an easily-testable pull request really helps to make this manageable. Even in the case when you are publishing your own app on Flathub, it's nice to have a computer programme do the boring work of updating a JSON file for you.
+
+Of course, there are other models that would work even better. The Firefox Flatpak on Flathub comes directly from Mozilla, and rather than being built by Flathub's infrastructure, it is pushed directly to Flathub by Mozilla's release process. So security updates for Firefox hit Flathub the moment they are released by Mozilla, without any delay.
 
 # How do I use it?
 
-Hopefully, I've convinced you that this tool is useful to maintainers of Flatpak apps. Or perhaps you are submitting an extra-data app to Flathub and have discovered that this tool is mandatory. :-) How do you actually use it?
+OK! Hopefully, I've convinced you that this tool is useful to you as an app developer, or as the maintainer of a Flatpak. Or perhaps you are submitting an extra-data app to Flathub and have discovered that this tool is mandatory! How do you actually use it?
 
-In short, you need to add some special annotations to the app's manifest to tell Flatpak External Data Checker how to check for new versions of the app. It has almost a dozen different checkers for various scenarios. I won't describe them all here but I'll give a few illustrative examples.
+In short, you probably need to add some special annotations to the app's manifest to tell Flatpak External Data Checker how to check for new versions of the app. It has almost a dozen different checkers for various scenarios. I won't describe them all here but I'll give a few illustrative examples.
 
 ## Rotating URL
 
@@ -167,7 +227,9 @@ In short, you need to add some special annotations to the app's manifest to tell
 }
 ```
 
-Here's a simple example for Zoom. Zoom has a special URL which always redirects to the latest version of the app. So in the section of the manifest which tells Flatpak where to download the file at installation time, we add an `x-checker-data` section with configuration for the checker. We tell it to use the `rotating-url` checker; we tell it the URL that redirects to the latest version of Zoom; and we provide a regular expression to extract the version number from that target URL.
+In case you're not familiar with Flatpak manifests, most of this is quite standard. This is a paragraph from a JSON file which tells Flatpak that Zoom should be downloaded from the given URL install time, and what the file's expected checksum and size are. The `x-checker-data` section is specific to Flatpak External Data Checker, and is ignored by `flatpak-builder`.
+
+In this case, Zoom has a special URL which always redirects to the latest version of the app. So we have an `x-checker-data` section which tells the checker to use the `rotating-url` checker. We tell it the URL that redirects to the latest version of Zoom, and we provide a regular expression to extract the version number from that target URL.
 
 That's all you need to do. Every hour, Flathub runs the external data checker on this repo; if it finds an update, it opens a pull request. Because we told it how to extract the version number, it can also update the *appdata* file in the repository.
 
@@ -214,6 +276,108 @@ So the happy news here is: no extra configuration was needed in the manifest to 
 
 Surprise! You came to a Flatpak talk, and now I'm going to talk about Snap!
 
+When Spotify was first added to Flathub, Spotify would distribute a `.deb` package of each version. But recently, Spotify stopped releasing `.deb` packages, and only publish new versions on Snapcraft.
+
+Happily, the Snap build can be made to run in a Flatpak, so the Flatpak app was updated to use the Snap as its extra-data source. And also happily, Rebecca Wallander contributed a Snap checker to Flatpak External Data Checker last year, which makes it very simple to keep it updated automatically: just tell it to use the snapcraft checker, for the stable channel of the spotify app. Done.
+
+It's definitely a bit weird that there are apps on Flathub which end up downloading the app itself from Snap, and I think there's an interesting developer advocacy question here. But again, we can be pragmatic here: evidently it works, and keeping it up to date is very simple. As a Spotify user, I didn't even notice this change. I only realised it had happened when I was preparing this talk.
+
 ## Anitya
 
-## GNOME
+```yaml
+- type: archive
+  url: https://commondatastorage.googleapis.com/chromium-browser-official/chromium-90.0.4430.72.tar.xz
+  sha256: a5cc88ca8fffac21ec4d1646980f698dfb6f388a225dd7a2c5a3d252a4098943
+  x-checker-data:
+    type: anitya
+    project-id: 13344
+    stable-only: true
+    url-template: https://commondatastorage.googleapis.com/chromium-browser-official/chromium-$version.tar.xz
+```
+
+I mentioned earlier that gasinvein added a backend to find new versions using release-monitoring.org, which is also known as "anitya" and is maintained by Fedora. If you're the developer of an open-source application, or maintain a Flatpak for one, this could be interesting for you.
+
+Here's an example of how that's used for the Chromium Flatpak. It's similar to the Snapcraft example, except that we need to give a numeric ID for the project, which you can find on the release-monitoring.org website, and provide a URL template with a placeholder for the version. But that's it!
+
+The other difference here is that the source is of type "archive", not "extra-data". This means that it is downloaded and compiled at build time, on Flathub's build server, rather than on the end-user's system.
+
+There are similar checkers for GNOME components, PyPI packages, Rust packages, and so on.
+
+## Updating dependencies
+
+```json
+                {
+                    "type": "git",
+                    "url": "https://github.com/LudovicRousseau/PCSC.git",
+                    "tag": "pcsc-1.9.0",
+                    "commit": "e796a0f12fbefa459bff0d25e27089615fa91f21",
+                    "x-checker-data": {
+                        "type": "git",
+                        "tag-pattern": "^pcsc-([\\d.]+)$"
+                    }
+                }
+```
+
+All the examples I've given so far are for keeping the app itself up-to-date, but you can use Flatpak External Data Checker to keep dependencies up-to-date, too. Here's an excerpt from the manifest for Remmina, an open-source remote desktop client, which has many dependencies. Most of them have `x-checker-data` annotations to automate updates. Here's an example using the `git` checker to keep the Flatpak updated with new releases of the PCSC smartcard library, which tells Flatpak External Data Checker to check for git tags matching the given regular expression, and extract the version number from it.
+
+## Automerge
+
+```yaml
+# flathub.json
+{
+  "automerge-flathubbot-prs": true
+}
+
+```
+
+There are some rare situations where you want the checker to automatically merge its own pull requests. We saw one earlier with the PlayStation emulator, but here's another example.
+
+There's a Flathub beta repository, which contains apps that for whatever reason aren't ready for general consumption. The “Insiders” unstable channel of Visual Studio Code is published here. The whole point of using this build of VS Code is to get early access to features and changes that may or may not work properly, so it's again worth the risk of the occasional broken version of the app to get those updates through automatically.
+
+You can opt into this behaviour by setting a flag in a `flathub.json` file in the same repository as the 
+
+## Test it yourself with Flatpak
+
+```bash
+flatpak install flathub org.flathub.flatpak-external-data-checker
+cd src/flathub/com.example.Foo
+flatpak run --filesystem=`pwd` \
+  org.flathub.flatpak-external-data-checker \
+  --edit-only \
+  com.example.Foo.json
+```
+
+Suppose you want to test your configuration locally, rather than pushing it to Flathub and waiting up to an hour to see what happens. It's quite easy to run the tool yourself.
+
+The checker is published as a Flatpak on Flathub, and (of course) it keeps itself up-to-date automatically. It's not visible in GUI frontends, so you need to install it from the command line. Having done that, you need to pass `--filesystem` to give it access to your manifest.
+
+By default, it just prints out what it would like to do on the terminal. The `--edit-only` flag tells it to make changes to your working copy, but not commit them or try to open a pull request. There are other flags, which you can find with `--help`. If you want it to open a pull request, you'll need to give it a GitHub API key.
+
+## Podman / Docker
+
+```bash
+podman run --rm -it -v `pwd`:`pwd` \
+	ghcr.io/flathub/flatpak-external-data-checker:latest \
+	--edit-only \
+    com.example.Foo.yaml
+```
+
+If you prefer Docker or Podman, maybe because you want to run it on Jenkins or something, it's also available as a Docker container on the GitHub Container Registry. The invocation is similar: you need to mount a volume containing the manifest you want it to check.
+
+There's a `Dockerfile` in the repository, which might be useful for developing the checker itself.
+
+# Get Involved
+
+https://github.com/flathub/flatpak-external-data-checker
+
+If you're interested in contributing to Flatpak External Data Checker itself, there are plenty of ways to do so.
+
+Probably the most obvious one is to start using it on your own app, and give feedback on how it works for you. If you are keen on writing documentation, the user's perspective is always very valuable. You could also contribute checkers for new software sources, or perhaps add more “magic” to some of the existing ones.
+
+I hear that even cronjobs get logos these days, so maybe you'd like to make a logo for the project. And actually, over the course of this talk I've realised that saying “Flatpak External Data Checker” over and over again can be a bit clumsy. So… maybe you can think of a snappier name!
+
+# Thanks!
+
+I'd like to thank all those who have contributed to this tool over the past few years. It's come a long way from a bash script on a private Jenkins instance!
+
+Any questions?

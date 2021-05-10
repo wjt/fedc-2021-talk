@@ -1,0 +1,312 @@
+#!/usr/bin/env python3
+import argparse
+import logging
+import os
+import subprocess
+import sqlite3
+
+import matplotlib
+matplotlib.use('GTK3Agg')  # or 'GTK3Cairo'
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+LOG = logging.getLogger(os.path.basename(__file__))
+DEFINE_TABLES = [
+    """
+    DROP TABLE IF EXISTS fedc_repos;
+    """,
+    """
+    CREATE TABLE fedc_repos (
+        repo text,
+        is_extra_data boolean
+    )
+    """,
+    """
+    DROP TABLE IF EXISTS fedc_commits;
+    """,
+    """
+    CREATE TABLE fedc_commits (
+        repo text,
+        date text,
+        committer text
+    )
+    """,
+]
+
+def load_data(conn, args):
+    for sql in DEFINE_TABLES:
+        conn.execute(sql)
+
+    cur = conn.cursor()
+    cur.execute("DELETE FROM fedc_commits")
+
+    for repo in args.repos:
+        repo_name = os.path.basename(repo)
+        if not os.path.isdir(repo):
+            continue
+
+        cp = subprocess.run(
+            ("git", "-C", repo, "grep", "--quiet", "extra-data"),
+        )
+        is_extra_data = cp.returncode == 0
+        cur.execute("""INSERT INTO fedc_repos VALUES (?, ?)""",
+                    (repo_name, is_extra_data))
+
+        cp = subprocess.run(
+            ("git", "-C", repo, "log", "--pretty=%as %ae", "--author", "desktop@endlessm.com", "--author", "sysadmin@flathub.org", "HEAD"),
+            # Work around org.gtk.Gtk3theme.elementary-dark having no commits
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+        )
+        if cp.returncode != 0:
+            LOG.warning("failed listing %s", repo)
+            continue
+
+        cur.executemany("""INSERT INTO fedc_commits values (?, ?, ?)""",
+                        [
+                            [repo_name] + line.split(maxsplit=1)
+                            for line in cp.stdout.splitlines()
+                        ]
+                        )
+    conn.commit()
+
+
+# These are "inches" at 100 DPI
+FIGSIZE = (16, 9)
+
+
+def commits_per_month(conn, args):
+    df = pd.read_sql(
+        """
+        select
+            strftime("%Y-%m", date) as month,
+            count(distinct repo) as "Repositories",
+            count(*) as "Commits"
+        from
+            fedc_commits
+        group by
+            1
+        order by
+            1
+        """,
+        conn,
+        parse_dates=["month"],
+        index_col="month",
+    )
+    ax = df.plot(
+        drawstyle="steps-post",
+        figsize=(16, 9),
+        title="Commits by Flatpak External Data Checker per month",
+    )
+    # ax.autoscale(tight=False)
+    ax.get_figure().savefig("images/commits-per-month.png")
+    plt.show()
+
+def repos_per_month(conn, args):
+    df = pd.read_sql(
+        """
+        select
+            strftime("%Y-%m", date) as month,
+            count(distinct repo) as repos
+        from
+            fedc_commits
+        group by
+            1
+        order by
+            1
+        """,
+        conn,
+        parse_dates=["month"],
+        index_col="month",
+    )
+    ax = df.plot(
+        drawstyle="steps-post",
+        figsize=(16, 9),
+        title="Repos with Commits by Flatpak External Data Checker, per Month",
+    )
+    ax.get_figure().savefig("images/repos-per-month.png")
+    # ax.autoscale(tight=False)
+    plt.show()
+
+
+def repos_over_time(conn, args):
+    df = pd.read_sql(
+        """
+            with x as (
+                select
+                    repo,
+                    min(date) as first_commit,
+                    count(*) as n_commits
+                from
+                    fedc_commits
+                group by
+                    repo
+                order by
+                    2 asc
+            )
+            select
+                x.repo,
+                 fedc_repos.is_extra_data,
+                  ROW_NUMBER() OVER (ORDER BY first_commit) as nth_adopter,
+                   x.first_commit,
+                    x.n_commits
+            from
+                x
+            join
+                fedc_repos
+            using
+                (repo)
+        """,
+        conn,
+        parse_dates=["first_commit"],
+    )
+    ax = df.set_index("first_commit")["nth_adopter"].plot(
+        figsize=(16, 9),
+        title="Total Repos with Commits by Flatpak External Data Checker",
+        drawstyle="steps-post",
+    )
+    ax.get_figure().savefig("images/repos-over-time.png")
+    plt.show()
+
+
+def top_repos(conn, args):
+    df = pd.read_sql(
+        """
+with x as (
+    select
+        repo,
+        is_extra_data,
+        count(*) as "Commits"
+    from
+        fedc_commits
+    join
+        fedc_repos
+    using
+        (repo)
+    group by
+        repo
+    order by
+        "Commits" desc
+    limit 30
+)
+select
+    repo,
+    case when is_extra_data then Commits else 0 end as "Commits (Extra Data)",
+    case when is_extra_data then 0 else Commits end as "Commits (Normal)"
+from
+    x
+order by
+    Commits desc
+        """,
+        conn,
+    )
+    ax = df.set_index("repo").plot.barh(
+        figsize=(16, 9),
+        stacked=True,
+        title="Repos with most commits by Flatpak External Data Checker",
+    )
+    fig = ax.get_figure()
+    fig.subplots_adjust(left=.25)
+    fig.savefig("images/top-repos.png")
+    # TODO: need more space for labels
+    # ax.subplots_adjust(left=.25)
+    plt.show()
+
+
+def proportion(conn, args):
+    df = pd.read_sql("""
+    with x as (
+            select
+                repo,
+                is_extra_data,
+                exists(select 1 from fedc_commits where fedc_commits.repo = fedc_repos.repo) as has_fedc_commit
+            from
+                fedc_repos
+        )
+ select case when is_extra_data then 'Extra Data' else 'Normal' end as "Kind", count(*) filter ( where has_fedc_commit) as "Uses External Data Checker", count(*) filter (where not has_fedc_commit) "Doesn't Use External Data Checker" from x group by 1;
+ """,
+ conn)
+    ax = df.set_index("Kind").plot.barh(
+        figsize=FIGSIZE,
+        stacked=True,
+        title="Proportion of repos using Flatpak External Data Checker",
+    )
+    ax.get_figure().savefig("images/proportion.png")
+    plt.show()
+
+
+def stats(conn, args):
+    # TODO: viridis
+    plt.style.use('ggplot')
+    for f in [
+        commits_per_month,
+        # repos_per_month,
+        repos_over_time,
+        top_repos,
+        proportion,
+    ]:
+        f(conn, args)
+        plt.clf()
+'''
+df = pd.read_sql(
+    """
+    with x as (
+        select
+            repo,
+            is_extra_data,
+            exists(select 1 from fedc_commits where fedc_commits.repo = fedc_repos.repo) as has_fedc_commit
+        from
+            fedc_repos
+    )
+    select
+        x.is_extra_data,
+        sum(x.has_fedc_commit),
+        count(*),
+        sum(x.has_fedc_commit) * 1.0 / count(*)
+    from
+        x
+    group by
+        x.is_extra_data
+    order by 1
+    """,
+    conn,
+)
+print(df.to_string())
+'''
+
+# Some interesting queries
+"""
+select strftime("%Y-%m", date) as month, count(distinct repo) as n_repos, count(*) as commits from fedc_commits group by 1;
+"""
+"""
+with x as (select repo, min(date) as first_commit, count(*) as n_commits from fedc_commits group by repo order by 2 asc) select x.repo, fedc_repos.is_extra_data, ROW_NUMBER() OVER (ORDER BY first_commit) as nth_adopter, x.first_commit, x.n_commits from x join fedc_repos using (repo);
+"""
+
+
+def main():
+    logging.basicConfig()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--database",
+                        # default=":memory:",
+                        default=os.path.join(os.path.dirname(__file__), "..", "contributions.db"),
+                        )
+    subparsers = parser.add_subparsers(required=True)
+
+    import_parser = subparsers.add_parser("import")
+    import_parser.add_argument("repos", nargs="*", metavar="REPODIR")
+    import_parser.set_defaults(func=load_data)
+
+    stats_parser = subparsers.add_parser("stats")
+    stats_parser.set_defaults(func=stats)
+
+    args = parser.parse_args()
+
+    conn = sqlite3.connect(args.database)
+    args.func(conn, args)
+
+
+if __name__ == "__main__":
+    main()
