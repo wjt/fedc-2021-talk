@@ -397,6 +397,11 @@ There's a `Dockerfile` in the repository, which might be useful for developing t
 
 https://github.com/flathub/flatpak-external-data-checker
 
+Future plans:
+
+- Runtime updates?
+- Automatically run language-specific manifest generators from flatpak-builder-tools?
+
 If you're interested in contributing to Flatpak External Data Checker itself, there are plenty of ways to do so.
 
 Probably the most obvious one is to start using it on your own app, and give feedback on how it works for you. If you are keen on writing documentation, the user's perspective is always very valuable. You could also contribute checkers for new software sources, or perhaps add more “magic” to some of the existing ones.
