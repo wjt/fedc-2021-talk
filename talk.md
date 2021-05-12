@@ -113,11 +113,11 @@ At this point, the process was still the same: when an app needed to be updated,
 
 ![](images/first-pull-request.png)
 
-It came to pass that I was often the one responding to those emails. I got tired of doing it all by hand, so at the start of 2019 I taught `flatpak-external-data-checker` to update the Flatpak manifest and open a pull request.
+It came to pass that I was often the one responding to those emails. I got tired of doing it all by hand, so at the start of 2019 I taught `flatpak-external-data-checker` to update the Flatpak manifest and open a pull request. At this point, it was still running out of Endless’s Jenkins, as the cryptically-named GitHub user `eos-shell-build`.
 
-This seems to have been the first pull request it opened, at least when running automatically rather than me running it by hand. It was actually declined, because someone manually opened another pull request for a slightly newer version of the app shortly afterwards!
+This seems to have been the first pull request it opened, at least when running on Jenkins, rather than me running it by hand on my development system with my own API key. It was actually declined, because someone manually opened another pull request for a slightly newer version of the app shortly afterwards!
 
-One of the really nice things about this workflow is that Flathub's own continuous integration automatically makes a test build of every pull request. So as an app maintainer, you just have to install and test that test build, and (assuming it works) accept the pull request.
+One of the really nice things about this workflow is that Flathub's own continuous integration automatically makes a test build of every pull request. So as a maintainer, you just have to install and test that test build, and (assuming it works) accept the pull request.
 
 ## Move to Flathub
 
@@ -128,7 +128,9 @@ Near the end of 2019, he deployed Flatpak External Data Checker on Flathub's own
 
 Making the tool more “official” had several nice results. Before, some Flathub contributors had been hesitant to integrate with a tool running on Endless's private CI infrastructure; as part of the Flathub organisation, they were happy to opt in, safe in the knowledge that the Flathub administrators could intervene as needed. It was also made a [requirement](https://github.com/flathub/flathub/wiki/App-Requirements#external-data-checker) that new extra-data apps submitted to Flathub should integrate with this tool, which of course helped with its adoption. Together, these also led to more people contributing to the project.
 
-This PR for Zoom seems to have been the first one opened by the Flathub instance of this tool. You might also notice that it's learned to update the appdata.xml file with the version number and release date of the new version of Zoom.
+This PR for Zoom seems to have been the first one opened by the Flathub instance of this tool. It's running as the GitHub user `flathubbot`, which is also the user which announces the URLs for test builds. These two systems actually don't know anything about each other – they just happen to run as the same user.
+
+You might also notice that it's learned to update the appdata.xml file with the version number and release date of the new version of Zoom.
 
 ## Becoming a general-purpose app updater
 
@@ -167,9 +169,11 @@ Even so, we can see quite an even split between extra-data and normal apps. For 
 
 ![proportion.png](images/proportion.png)
 
-This made me wonder: if so many of the most-frequently-updated repositories are in fact open source, how do the totals break down, both on Flathub in general, and for repos monitored by External Data Checker in particular? 
+This made me wonder: if so many of the most-frequently-updated repositories are in fact open-source or fully distributed by Flathub, how does that compare to the proportion of apps of each kind on Flathub as a whole.
 
 As I've mentioned, of the 112 repos that external data checker has ever updated, just 36 are extra-data. The remaining 76 are normal, redistributable Flatpaks. This is actually almost as many as the 79 extra-data apps that Flathub has in total. But in relative terms, the external data checker is used for almost half (45%) of those extra-data apps, compared to just 5% of other apps.
+
+(If you are wondering why this chart shows almost 1,600 apps on Flathub, while `flatpak remote-list --app` shows a smidge over 1,200 and other lists fewer still, it's because I am including runtimes, extensions–like over 100 plugins for digital audio workstations!—and EOLed apps.)
 
 Personally, I find these numbers quite reassuring. I think it is reasonable to ask whether it is really desirable for Flathub to publish these extra-data wrappers for proprietary apps. Even if you ignore the free software angle, I'll quote [from the Flathub website](https://github.com/flathub/flathub/wiki/App-Submission#someone-else-has-put-my-app-on-flathubwhat-do-i-do):
 
@@ -327,16 +331,16 @@ You might hope that you'd be able to handle Git tags automatically, but unfortun
 ## Updating dependencies
 
 ```json
-                {
-                    "type": "git",
-                    "url": "https://github.com/LudovicRousseau/PCSC.git",
-                    "tag": "pcsc-1.9.0",
-                    "commit": "e796a0f12fbefa459bff0d25e27089615fa91f21",
-                    "x-checker-data": {
-                        "type": "git",
-                        "tag-pattern": "^pcsc-([\\d.]+)$"
-                    }
-                }
+{
+    "type": "git",
+    "url": "https://github.com/LudovicRousseau/PCSC.git",
+    "tag": "pcsc-1.9.0",
+    "commit": "e796a0f12fbefa459bff0d25e27089615fa91f21",
+    "x-checker-data": {
+        "type": "git",
+        "tag-pattern": "^pcsc-([\\d.]+)$"
+    }
+}
 ```
 
 There are some cases when you can handle Git tags more straightforwardly.
@@ -361,7 +365,7 @@ You can opt into this behaviour by setting a flag in a `flathub.json` file in th
 
 ## Test it yourself with Flatpak
 
-```bash
+```
 flatpak install flathub org.flathub.flatpak-external-data-checker
 cd src/flathub/com.example.Foo
 flatpak run --filesystem=`pwd` \
@@ -378,7 +382,7 @@ By default, it just prints out what it would like to do on the terminal. The `--
 
 ## Podman / Docker
 
-```bash
+```
 podman run --rm -it -v `pwd`:`pwd` \
 	ghcr.io/flathub/flatpak-external-data-checker:latest \
 	--edit-only \
