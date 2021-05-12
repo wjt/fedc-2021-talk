@@ -137,34 +137,50 @@ def repos_over_time(conn, args):
             with x as (
                 select
                     repo,
-                    min(date) as first_commit,
-                    count(*) as n_commits
+                    case when is_extra_data = 0 then 'Normal' else 'Extra Data' end as kind,
+                    min(date) as first_commit
                 from
                     fedc_commits
+                join
+                    fedc_repos
+                using
+                    (repo)
                 group by
                     repo
                 order by
-                    2 asc
+                    first_commit asc
+            ),
+            y as (
+                select
+                    first_commit,
+                    repo,
+                    kind,
+                    ROW_NUMBER() OVER (PARTITION BY kind ORDER BY first_commit) as nth_of_kind
+                from
+                    x
+                order by
+                    first_commit asc
             )
             select
-                x.repo,
-                 fedc_repos.is_extra_data,
-                  ROW_NUMBER() OVER (ORDER BY first_commit) as nth_adopter,
-                   x.first_commit,
-                    x.n_commits
+                first_commit,
+                kind,
+                max(nth_of_kind) as number_of_kind
             from
-                x
-            join
-                fedc_repos
-            using
-                (repo)
+                y
+            group by
+                first_commit,
+                kind
+            order by
+                first_commit asc
         """,
         conn,
         parse_dates=["first_commit"],
     )
-    ax = df.set_index("first_commit")["nth_adopter"].plot(
-        figsize=(16, 9),
-        title="Total Repos with Commits by Flatpak External Data Checker",
+    df = df.pivot(index="first_commit", columns="kind", values="number_of_kind")
+    df = df.ffill().fillna(0)
+    ax = df.reindex(columns=("Normal", "Extra Data")).plot(
+        figsize=FIGSIZE,
+        title="Repos with Commits by Flatpak External Data Checker",
         drawstyle="steps-post",
     )
     ax.get_figure().savefig("images/repos-over-time.png")
