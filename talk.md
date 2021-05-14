@@ -3,7 +3,7 @@
 Good morning from London in the United Kingdom! My name is Will Thompson. I'm an engineering director at Endless OS Foundation. 
 Our mission is to help all people and communities connect with technology. I'll say a bit more about Endless OS itself later.
 
-Today I'm going to talk about Flatpak External Data Checker. I'll explain what it is, tell you a bit about its history, and what it's doing today. I'll give some examples of how you can use it yourself, and ways that you can get involved in the project.
+Today I'm going to talk about Flatpak External Data Checker, which helps keep Flatpaks up-to-date with new releases of the app or its dependencies. I'll explain what it is, tell you a bit about its history, and what it's doing today. I'll give some examples of how you can use it yourself, and ways that you can get involved in the project.
 
 We'll have some time at the end for questions, so if you have any questions during the talk, please leave them in the shared notes section of the chat. If you're watching the recording and have any questions, please get in touch: my contact details are on this slide.
 
