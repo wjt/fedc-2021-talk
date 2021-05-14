@@ -244,9 +244,9 @@ sources:
     size: 80621214
 ```
 
-Here's another example for Unity Hub, which is a app which can be used in turn to download and run Unity, the popular game development platform. Unity Hub is distributed as an AppImage file, which funnily enough is a competing Linux app distribution tool. Flatpak External Data Checker has special handling for `.AppImage` files – it unpacks them to find the version number within.
+Here's another example, this time using YAML syntax. It's for Unity Hub, which is a app which can be used in turn to download and run Unity, the popular game development platform. Unity Hub is distributed as an AppImage file, which funnily enough is a competing Linux app distribution tool. Flatpak External Data Checker has special handling for `.AppImage` files – it unpacks them to find the version number within.
 
-This is an example of the situation I described earlier, where each new version is published at the same URL as the old one; so every time a new version of Unity Hub is released, the Flatpak can't be installed until its manifest is updated on Flathub.
+This is an example of the situation I described earlier, where each new version is published at the same URL as the old one; so every time a new version of Unity Hub is released, the Flatpak can't be installed until its manifest is updated on Flathub. We actually forgot to add this app to the big Endless Jenkins job once it was accepted on Flathub, and it broke almost immediately without us noticing.
 
 Generally, a human being is expected to have tested that an app update works before publishing it on Flathub, so the external data checker just opens a pull request and waits for a human to merge it. But in this case, it detects that the existing version on Flathub is broken, and will automatically merge its own PR if its CI checks pass.
 
