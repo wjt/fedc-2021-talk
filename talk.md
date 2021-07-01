@@ -3,17 +3,19 @@
 Good morning from London in the United Kingdom! My name is Will Thompson. I'm an engineering director at Endless OS Foundation. 
 Our mission is to help all people and communities connect with technology. I'll say a bit more about Endless OS itself later.
 
-Today I'm going to talk about Flatpak External Data Checker, which helps keep Flatpaks up-to-date with new releases of the app or its dependencies. I'll explain what it is, tell you a bit about its history, and what it's doing today. I'll give some examples of how you can use it yourself, and ways that you can get involved in the project.
+Today I'm going to talk about Flatpak External Data Checker, which helps keep Flatpaks up-to-date with new releases of the app or its dependencies. I'll explain what it does, tell you a bit about its history, and what it's doing today. I'll give some examples of how you can use it yourself, and ways that you can get involved in the project.
 
 We'll have some time at the end for questions, so if you have any questions during the talk, please leave them in the shared notes section of the chat. If you're watching the recording and have any questions, please get in touch: my contact details are on this slide.
 
 # What is Flatpak?
 
+<!--
 ![](images/flatpak-fullcolor.png) ![](images/flathub-badge-en.svg)
+-->
 
 To understand the motivation for this tool, it helps to know a few facts about Flatpak instelf. Quoting from its website,
 
-> Flatpak is a next-generation technology for building and distribution desktop applications on Linux.
+> Flatpak is a next-generation technology for building and distributing desktop applications on Linux.
 
 Applications are built and run in a predictable environment, regardless of the Linux distribution they're running on. Anyone can host a repository of Flatpak applications, and users can have applications installed from several repositories at once. Perhaps the most prominent Flatpak repository is Flathub, which is a vendor-neutral project hosting a mixture of open source and proprietary applications, and this is the one I'll be concentrating on today. But whenever I say “Flathub”, you can imagine a footnote saying “or another Flatpak repository which works like Flathub”.
 
@@ -124,7 +126,7 @@ One of the really nice things about this workflow is that Flathub's own continuo
 ![](images/first-flathubbot-pull-request.png)
 
 Bartłomiej Piotrowski is a DevOps engineer at the GNOME Foundation, and is one of the main administrators of Flathub.
-Near the end of 2019, he deployed Flatpak External Data Checker on Flathub's own infrastructure, and we moved the repository to the Flathub organisation. He set it up to check any app on Flathub that had opted in.
+Near the end of 2019, he deployed Flatpak External Data Checker on Flathub's own infrastructure, and we moved the repository to the Flathub organisation. He set it up to run every hour, and check any app on Flathub that had the appropriate configuration in its manifest.
 
 Making the tool more “official” had several nice results. Before, some Flathub contributors had been hesitant to integrate with a tool running on Endless's private CI infrastructure; as part of the Flathub organisation, they were happy to opt in, safe in the knowledge that the Flathub administrators could intervene as needed. It was also made a [requirement](https://github.com/flathub/flathub/wiki/App-Requirements#external-data-checker) that new extra-data apps submitted to Flathub should integrate with this tool, which of course helped with its adoption. Together, these also led to more people contributing to the project.
 
@@ -161,7 +163,11 @@ Anyway, back to what the tool does. Here I've plotted the number of repositories
 
 ![top-repos.png](images/top-repos.png)
 
-Here are the top 30 apps and runtimes by number of commits authored by flatpak-external-data-checker. Of course this will be biased towards apps which have been using the tool for longer.
+Here are the top 30 apps and runtimes by number of commits authored by flatpak-external-data-checker.
+
+I've coloured the bars by whether the the app is extra-data or not. I've just realised that the colours are the opposite way round compared to the earlier slide... Here, extra-data apps are red, and normal apps are blue.
+
+Of course this will be biased towards apps which have been using the tool for longer. 
 
 Even so, we can see quite an even split between extra-data and normal apps. For instance, the third-most-frequently-updated app on this list is RPCS3, a PlayStation 3 emulated released under the GPL. Flathub tracks the `master` branch of the upstream project. I guess this is a fast-moving project where being at the bleeding edge is worth the potential for the occasional broken build if it means better compatibility with games. High up here, we also see the nightly build of the Rust toolchain, which is open source, as well as the Insiders (a.k.a. nightly) build of Visual Studio Code, which isn't.
 
@@ -169,7 +175,7 @@ Even so, we can see quite an even split between extra-data and normal apps. For 
 
 ![proportion.png](images/proportion.png)
 
-This made me wonder: if so many of the most-frequently-updated repositories are in fact open-source or fully distributed by Flathub, how does that compare to the proportion of apps of each kind on Flathub as a whole.
+This made me wonder: if so many of the most-frequently-updated repositories are in fact open-source or fully distributed by Flathub, how does that compare to the proportion of apps of each kind on Flathub as a whole?
 
 As I've mentioned, of the 112 repos that external data checker has ever updated, just 36 are extra-data. The remaining 76 are normal, redistributable Flatpaks. This is actually almost as many as the 79 extra-data apps that Flathub has in total. But in relative terms, the external data checker is used for almost half (45%) of those extra-data apps, compared to just 5% of other apps.
 
@@ -195,13 +201,13 @@ The Chromium repository on Flathub is wired up to Flatpak External Data Checker,
 
 Personally, I publish a few of my own apps on Flathub, and somewhat maintain the Flatpaks for perhaps a dozen more, most of which are open source. Getting notified of a new upstream TuxPaint releases in the form of an easily-testable pull request really helps to make this manageable. Even in the case when you are publishing your own app on Flathub, it's nice to have a computer programme do the boring work of updating a JSON file for you.
 
-Of course, there are other models that would work even better. The Firefox Flatpak on Flathub comes directly from Mozilla, and rather than being built by Flathub's infrastructure, it is pushed directly to Flathub by Mozilla's release process. So security updates for Firefox hit Flathub the moment they are released by Mozilla, without any delay.
+Of course, there are other models that could work just as well, or better. The Firefox Flatpak on Flathub comes directly from Mozilla, and rather than being built by Flathub's infrastructure, it is pushed directly to Flathub by Mozilla's release process. So security updates for Firefox hit Flathub the moment they are released by Mozilla, without any delay.
 
 # How do I use it?
 
 OK! Hopefully, I've convinced you that this tool is useful to you as an app developer, or as the maintainer of a Flatpak. Or perhaps you are submitting an extra-data app to Flathub and have discovered that this tool is mandatory! How do you actually use it?
 
-In short, you probably need to add some special annotations to the app's manifest to tell Flatpak External Data Checker how to check for new versions of the app. It has almost a dozen different checkers for various scenarios. I won't describe them all here but I'll give a few illustrative examples.
+In short, you generally need to add some special annotations to the app's manifest to tell Flatpak External Data Checker how to check for new versions of the app. It has almost a dozen different checkers for various scenarios. I won't describe them all here but I'll give a few illustrative examples.
 
 ## Rotating URL
 
