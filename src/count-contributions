@@ -221,7 +221,9 @@ order by
         """,
         conn,
     )
-    ax = df.set_index("repo").plot.barh(
+    df.set_index("repo", inplace=True)
+    print(df.to_string())
+    ax = df.plot.barh(
         figsize=(16, 9),
         stacked=True,
         title="Repos with most commits by Flatpak External Data Checker",
@@ -247,7 +249,10 @@ def proportion(conn, args):
  select case when is_extra_data then 'Extra Data' else 'Normal' end as "Kind", count(*) filter ( where has_fedc_commit) as "Uses External Data Checker", count(*) filter (where not has_fedc_commit) "Doesn't Use External Data Checker" from x group by 1;
  """,
  conn)
-    ax = df.set_index("Kind").plot.barh(
+    df.set_index("Kind", inplace=True)
+    print(df.to_string())
+    print(df.sum().sum())
+    ax = df.plot.barh(
         figsize=FIGSIZE,
         stacked=True,
         title="Proportion of repos using Flatpak External Data Checker",
