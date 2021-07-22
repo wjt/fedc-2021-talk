@@ -95,6 +95,7 @@ def commits_per_month(conn, args):
         parse_dates=["month"],
         index_col="month",
     )
+    print(df.to_string())
     ax = df.plot(
         drawstyle="steps-post",
         figsize=(16, 9),
@@ -178,7 +179,9 @@ def repos_over_time(conn, args):
     )
     df = df.pivot(index="first_commit", columns="kind", values="number_of_kind")
     df = df.ffill().fillna(0)
-    ax = df.reindex(columns=("Normal", "Extra Data")).plot(
+    df = df.reindex(columns=("Normal", "Extra Data"))
+    print(df.to_string())
+    ax = df.plot(
         figsize=FIGSIZE,
         title="Repos with Commits by Flatpak External Data Checker",
         drawstyle="steps-post",
