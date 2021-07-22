@@ -259,15 +259,17 @@ def proportion(conn, args):
 def stats(conn, args):
     # TODO: viridis
     plt.style.use('ggplot')
-    for f in [
+    fs = [
         commits_per_month,
         # repos_per_month,
         repos_over_time,
         top_repos,
         proportion,
-    ]:
-        f(conn, args)
-        plt.clf()
+    ]
+    for f in fs:
+        if not args.charts or f.__name__ in args.charts:
+            f(conn, args)
+            plt.clf()
 '''
 df = pd.read_sql(
     """
@@ -321,6 +323,7 @@ def main():
 
     stats_parser = subparsers.add_parser("stats")
     stats_parser.set_defaults(func=stats)
+    stats_parser.add_argument("charts", nargs="*", metavar="CHART")
 
     args = parser.parse_args()
 
