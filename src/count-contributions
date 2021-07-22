@@ -308,6 +308,7 @@ def main():
     parser.add_argument("--database",
                         # default=":memory:",
                         default=os.path.join(os.path.dirname(__file__), "..", "contributions.db"),
+                        help="default: %(default)s"
                         )
     subparsers = parser.add_subparsers(required=True)
 
