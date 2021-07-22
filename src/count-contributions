@@ -209,8 +209,8 @@ with x as (
 )
 select
     repo,
-    case when is_extra_data then Commits else 0 end as "Commits (Extra Data)",
-    case when is_extra_data then 0 else Commits end as "Commits (Normal)"
+    case when is_extra_data then 0 else Commits end as "Commits (Normal)",
+    case when is_extra_data then Commits else 0 end as "Commits (Extra Data)"
 from
     x
 order by

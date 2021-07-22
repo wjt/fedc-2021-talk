@@ -165,7 +165,7 @@ Anyway, back to what the tool does. Here I've plotted the number of repositories
 
 Here are the top 30 apps and runtimes by number of commits authored by flatpak-external-data-checker.
 
-I've coloured the bars by whether the the app is extra-data or not. I've just realised that the colours are the opposite way round compared to the earlier slide... Here, extra-data apps are red, and normal apps are blue.
+Again I've coloured the bars by whether the the app is extra-data or not.
 
 Of course this will be biased towards apps which have been using the tool for longer. 
 
