@@ -140,7 +140,7 @@ You might also notice that it's learned to update the appdata.xml file with the 
 
 When it was rolled out to Flathub, something interesting happened: Flatpak External Data Checker started to be used not only to keep extra-data Flatpaks up-to-date, but also to keep regular Flatpaks up-to-date as well.
 
-When I prepared this talk, there were 112 apps on Flathub which have been updated by this tool at least once in their history. Of those, only 36 are extra-data: that's the blue line in this graph. The remaining 76 are normal Flatpaks that Flathub can build and distribute in full. That's the red line in this graph.
+When I prepared this talk, there were 139 repositories on Flathub which have been updated by this tool at least once in their history. Of those, only 40 are extra-data: that's the blue line in this graph. The remaining 99 are normal Flatpaks that Flathub can build and distribute in full. That's the red line in this graph.
 
 You can probably see that both lines went up steadily over the course of 2020, after this tool was deployed on Flathub. There's a nice bump right at the end of 2019, which seems to have been the day that we merged support for updating JetBrains IDEs, contributed by “Lctrs”.
 
@@ -157,7 +157,7 @@ If you take a look at GitHub's page which graph contributions to Flatpak Externa
 
 ![commits-per-month.png](images/commits-per-month.png)
 
-Anyway, back to what the tool does. Here I've plotted the number of repositories to which an update from Flatpak External Data Checker was merged in any given month, and the number of changes. Not every app has an update every month, which is why the number of repositories updated in the last few months is just 50 or so. But the number of commits it makes is consistently much higher, so it's updating some apps more than once a month. For the last two months, it's been over 300 commits per month.
+Anyway, back to what the tool does. Here I've plotted the number of repositories to which an update from Flatpak External Data Checker was merged in any given month, and the number of changes. Not every app has an update every month, which is why the number of repositories updated in the last few months is 70 or so, about half of the 139 repos it's ever committed to. But the number of commits it makes is consistently much higher, so it's updating some apps more than once a month. The peak was in April, with 317 commits across 81 repos.
 
 ## Top apps
 
@@ -177,9 +177,9 @@ Even so, we can see quite an even split between extra-data and normal apps. For 
 
 This made me wonder: if so many of the most-frequently-updated repositories are in fact open-source or fully distributed by Flathub, how does that compare to the proportion of apps of each kind on Flathub as a whole?
 
-As I've mentioned, of the 112 repos that external data checker has ever updated, just 36 are extra-data. The remaining 76 are normal, redistributable Flatpaks. This is actually almost as many as the 79 extra-data apps that Flathub has in total. But in relative terms, the external data checker is used for almost half (45%) of those extra-data apps, compared to just 5% of other apps.
+As I've mentioned, of the 139 repos that external data checker has ever updated, just 40 are extra-data. The remaining 99 are normal, redistributable Flatpaks. This is actually more than the 83 extra-data apps that Flathub has in total. But in relative terms, the external data checker is used for almost half (48%) of those extra-data apps, compared to just 6% of other apps.
 
-(If you are wondering why this chart shows almost 1,600 apps on Flathub, while `flatpak remote-list --app` shows a smidge over 1,200 and other lists fewer still, it's because I am including runtimes, extensions–like over 100 plugins for digital audio workstations!—and EOLed apps.)
+(If you are wondering why this chart shows over 1,600 apps on Flathub, while `flatpak remote-ls --app flathub` shows nearly 1,300 and other lists fewer still, it's because I am including runtimes, extensions–like over 100 plugins for digital audio workstations!—and EOLed apps.)
 
 Personally, I find these numbers quite reassuring. I think it is reasonable to ask whether it is really desirable for Flathub to publish these extra-data wrappers for proprietary apps. Even if you ignore the free software angle, I'll quote [from the Flathub website](https://github.com/flathub/flathub/wiki/App-Submission#someone-else-has-put-my-app-on-flathubwhat-do-i-do):
 
