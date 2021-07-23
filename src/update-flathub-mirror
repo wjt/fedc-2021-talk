@@ -1,0 +1,20 @@
+#!/bin/bash
+set -ex
+cd ~/src/flathub-all
+
+if [[ $# -eq 0 ]]; then
+    export GITHUB_TOKEN=$(awk '/oauth_token/ { print $2 }' ~/.config/gh/hosts.yml)
+    ./actions/flathub-external-data-checker/gh-ls-org flathub | xargs -P16 -n1 $0
+else
+    repo=$1
+    dir=${repo##*/}
+    if [[ -d ${repo##*/} ]]; then
+        if $(git -C $dir rev-parse --is-shallow-repository); then
+            git -C $dir pull --unshallow
+        else
+            git -C $dir pull
+        fi
+    else
+        gh repo clone $repo
+    fi
+fi
